@@ -163,11 +163,30 @@ Und das würde theoretisch ausreichen um ein NixOS zu betreiben.
 
 -----
 
+-> # NixOS Configuration Management! <-
+
+Um das System zu verändern
+
+~~~
+vim /etc/nixos/configuration.nix
+nixos-rebuild switch
+~~~
+
+Demo Time!
+
+-----
+
 -> # User-local Installs! <-
 
 -----
 
 -> # Rollbacks! <-
+
+-----
+
+-> # Wie funktioniert das technisch alles?! <-
+
+Permissions, Symlinks, cgroups
 
 -----
 
@@ -180,5 +199,16 @@ Und das würde theoretisch ausreichen um ein NixOS zu betreiben.
 
 nix - Package Manager
 nixos - Operating System
-nixops - Server Orchestration Tool
+nixops - Service Orchestration Tool
 
+
+-----
+
+-> # Meta Slide <-
+
+Danke!
+
+Für diesen Talk habe ich [mpd]() benutzt und würde gerne erfahren wie ihr
+diese Art der Darstellung fandet.
+
+Außerdem lenkt das wunderbar von Inhaltlichen Fragen zum Vortrag ab.
