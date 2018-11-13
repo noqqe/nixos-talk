@@ -129,16 +129,25 @@ Arbeit für einen zu erledigen.
 
 -----
 
+-> # NixOS <-
+
+Warum ist das jetzt geil?
+
+* Verlässliche atomare Upgrades
+* Rollbacks
+* Reproduzierbare System Konfiguration
+
+-----
+
 -> # NixOS Zitat aus dem IRC <-
 
 > Setting up NixOS to me is like setting up Arch but you're guaranteed to only need to do it once
 >
 > jD91mZM2
 
-
 -----
 
--> # NixOS Configuration Management! <-
+-> # NixOS: Configuration Management! <-
 
 Gehen wir von einem Plain NixOS (frisch installiert) aus.
 
@@ -164,7 +173,7 @@ Und das würde theoretisch ausreichen um ein NixOS zu betreiben.
 
 -----
 
--> # NixOS Configuration Management! <-
+-> # NixOS: Configuration Management! <-
 
 Um das System zu verändern
 
@@ -177,7 +186,7 @@ Demo Time!
 
 -----
 
--> # NixOS Internals! <-
+-> # NixOS: Internals! <-
 
 Was passiert da jetzt unter der Haube
 
@@ -196,7 +205,7 @@ system-1-link -> /nix/store/jw12px138dybgir3dqik670gfx1xswg0-nixos-system-mqtt.k
 
 -----
 
--> # NixOS Rollback! <-
+-> # NixOS: Rollback! <-
 
 Das tolle daran, Angewandte Changes können (in bestimmten Maße) zurückgerollt
 werden.
@@ -219,7 +228,47 @@ wirklich funktioniert!
 
 -----
 
--> # User-local Installs! <-
+-> # NixOS: Wie funktioniert das technisch alles?! <-
+
+<ballmer>Symlinks, Symlinks, Symlinks\</ballmer\>
+
+~~~
+$ which git
+/run/current-system/sw/bin/git
+$ l /run/current-system/sw/bin/git
+/run/current-system/sw/bin/git -> /nix/store/gc80crp6ddm11h6zh3vnkzlbacxnswak-git-2.14.1/bin/git
+~~~
+
+-----
+
+-> # NixOS: Wie funktioniert das technisch alles?! <-
+
+Ein `ps` kann unter Umständen anfangs etwas verwirrend aussehen.
+
+~~~
+httpd -f /nix/store/yhdz9vwkm35r9f3fqj5dp9dzyg0154br-httpd.conf
+ \_ httpd -f /nix/store/yhdz9vwkm35r9f3fqj5dp9dzyg0154br-httpd.conf
+ \_ httpd -f /nix/store/yhdz9vwkm35r9f3fqj5dp9dzyg0154br-httpd.conf
+ \_ httpd -f /nix/store/yhdz9vwkm35r9f3fqj5dp9dzyg0154br-httpd.conf
+ \_ httpd -f /nix/store/yhdz9vwkm35r9f3fqj5dp9dzyg0154br-httpd.conf
+dhcpcd -w --quiet --config /nix/store/65faqsgxbxgdpb9xj5q9r780lj0jcdwj-dhcpcd.conf
+nix-daemon --daemon
+/nix/store/ick7hkazslqz2b75nfgfr0fz5cgal3c8-cron-4.1/bin/cron -n
+/nix/store/8dshy3jqzkw2c73czw6kbw0msx9ivfi6-systemd-232/lib/systemd/systemd --user
+ \_ (sd-pam
+ \_ /nix/store/sshcjcvscx2kxy3x11rbqsxd4g780ln4-openssh-7.4p1/bin/ssh-agent -a /run/user/1000/ssh-agent
+/nix/store/pcl82rq2aw28015pqi27hwgrp5znrfq3-mosquitto-1.4.14/bin/mosquitto -c /nix/store/m699paqbxybhfdmlnkn53q2sc6r69ni5-mosquitto.conf -d
+~~~
+
+-----
+
+-> # Nix: Der Paket Manager <-
+
+NixOS basiert auf Nix, dem Paket Manager.
+
+-----
+
+-> # Nix: User-local Installs! <-
 
 Ich muss unter NixOS allerdings kein `root` sein um neue Pakete zu
 installieren.
@@ -232,7 +281,7 @@ $ curl http://russenschlampen.de
 
 -----
 
--> # User-local Installs! <-
+-> # Nix: User-local Installs! <-
 Was passiert ist, dass unter `/nix/store` die Binaries abgelegt werden.
 
 ~~~
@@ -251,7 +300,7 @@ Jeder User hat einen eigenen PATH mit Binard
 
 -----
 
--> # User-local Installs! <-
+-> # Nix: User-local Installs! <-
 
 In diesem Folder ist dann, vereinfacht gesagt nichts anderes als Symlink
 
@@ -269,7 +318,7 @@ telnet -> /nix/store/sh7lppfxk3w1pigrclsqw3dq9g81bavh-telnet-1.2/bin/telnet
 
 -----
 
--> # User local Rollbacks! <-
+-> # Nix: User local Rollbacks! <-
 
 Diese ganze Rollback Geschichte funktioniert natürlich auch bei User Paketen.
 
@@ -294,7 +343,7 @@ which: no telnet in PATH
 
 -----
 
--> # User local Rollbacks! <-
+-> # Nix: User local Rollbacks! <-
 
 ~~~
 $ nix-env --list-generations
@@ -311,41 +360,10 @@ $ nix-env --list-generations
  11   2018-11-12 20:52:00
 ~~~
 
------
-
--> # Wie funktioniert das technisch alles?! <-
-
-<ballmer>Symlinks, Symlinks, Symlinks\</ballmer\>
-
-~~~
-$ which git
-/run/current-system/sw/bin/git
-$ l /run/current-system/sw/bin/git
-/run/current-system/sw/bin/git -> /nix/store/gc80crp6ddm11h6zh3vnkzlbacxnswak-git-2.14.1/bin/git
-~~~
 
 -----
 
--> # Wie funktioniert das technisch alles?! <-
-
-~~~
-httpd -f /nix/store/yhdz9vwkm35r9f3fqj5dp9dzyg0154br-httpd.conf
- \_ httpd -f /nix/store/yhdz9vwkm35r9f3fqj5dp9dzyg0154br-httpd.conf
- \_ httpd -f /nix/store/yhdz9vwkm35r9f3fqj5dp9dzyg0154br-httpd.conf
- \_ httpd -f /nix/store/yhdz9vwkm35r9f3fqj5dp9dzyg0154br-httpd.conf
- \_ httpd -f /nix/store/yhdz9vwkm35r9f3fqj5dp9dzyg0154br-httpd.conf
-dhcpcd -w --quiet --config /nix/store/65faqsgxbxgdpb9xj5q9r780lj0jcdwj-dhcpcd.conf
-nix-daemon --daemon
-/nix/store/ick7hkazslqz2b75nfgfr0fz5cgal3c8-cron-4.1/bin/cron -n
-/nix/store/8dshy3jqzkw2c73czw6kbw0msx9ivfi6-systemd-232/lib/systemd/systemd --user
- \_ (sd-pam
- \_ /nix/store/sshcjcvscx2kxy3x11rbqsxd4g780ln4-openssh-7.4p1/bin/ssh-agent -a /run/user/1000/ssh-agent
-/nix/store/pcl82rq2aw28015pqi27hwgrp5znrfq3-mosquitto-1.4.14/bin/mosquitto -c /nix/store/m699paqbxybhfdmlnkn53q2sc6r69ni5-mosquitto.conf -d
-~~~
-
------
-
--> # Nix Eco System <-
+-> # Nix Eco System: Überblick <-
 
 nix - Package Manager
 nixos - Operating System
@@ -360,6 +378,12 @@ Lässt sich auch auf Linux/macOS installieren.
 Obacht, `curl | bash` ahead!
 
 Das heisst man hat dann all diese Vorteile von local Install und Versionen.
+
+-----
+
+-> # Was machen wir in der K4CG mit NixOS? <-
+
+Demo Time!
 
 -----
 
