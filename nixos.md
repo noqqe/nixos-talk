@@ -14,7 +14,7 @@ Warning: There might be dragons.
 Die 90er.
 Hart.
 Rau.
-Dein OS wird *manuell* konfiguriert.
+Dein OS wird *manuell* via einzelner Kommandos konfiguriert.
 
 ```
 ssh user@server
@@ -34,7 +34,7 @@ Restartest deinen Dienst.
 2000.
 
 Der Durchschnittsadmin peitscht immer mehr Server in Clustern vor sich her.
-Repitative Arbeit.
+Repitative Arbeit in einem Team von Admins.
 
 * Login
 * Change
@@ -42,6 +42,17 @@ Repitative Arbeit.
 
 Viele schreiben Shell Skripte in Not und Verzweiflung um nicht der Tippgicht
 zu verfallen.
+
+-----
+
+-> # The Rise of Configuration Management <-
+
+Deine Daemons, das Internet (curl |bash), deine Kollegen* werden alles tun um den State deiner Systeme alternieren.
+Ohne das du es mitbekommst oder irgendwann nochmal weisst.
+
+Die Bash History ist _keine_ Dokumentation!
+
+\*Kollegen: Du selbst mit eingeschlossen!
 
 -----
 
@@ -360,6 +371,15 @@ $ nix-env --list-generations
  11   2018-11-12 20:52:00
 ~~~
 
+-----
+
+-> # Nix: Package Manager <-
+
+Lässt sich auch auf Linux/macOS installieren.
+
+Obacht, `curl | bash` ahead!
+
+Das heisst man hat dann all diese Vorteile von local Install und Versionen.
 
 -----
 
@@ -371,13 +391,26 @@ nixops - Service Orchestration Tool
 
 -----
 
--> # nix Package Manager <-
+-> # NixOps: Abstraktion ist die Lösung aller Probleme <-
 
-Lässt sich auch auf Linux/macOS installieren.
+[NixOps](https://nixos.org/nixops/) ist sozusagen noch ein Layer mehr. Also mehrere Maschinen maintainen.
+Sozusagen eine Mischung aus Ansible und Terraform.
 
-Obacht, `curl | bash` ahead!
+```
+{
+  webserver =
+    { deployment.targetEnv = "virtualbox";
+      services.httpd.enable = true;
+    };
 
-Das heisst man hat dann all diese Vorteile von local Install und Versionen.
+  fileserver =
+    { deployment.targetEnv = "virtualbox";
+      services.nfs.server.enable = true;
+    };
+}
+```
+
+Generell habe ich damit aber keine Erfahrung.
 
 -----
 
