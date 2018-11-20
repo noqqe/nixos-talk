@@ -1,0 +1,283 @@
+<h1>The Rise of Configuration Management</h2>
+<p>Um in NixOS einzusteigen, m&uuml;ssen wir kurz etwas ausholen.
+Es war einmal ein armer Systemadmin der mit seinen Aufgaben wachsen musste.</p>
+<p>Warning: There might be dragons.</p>
+<hr>
+<h2 id="convincing-operating-systems">Convincing Operating Systems</h2>
+<p>Die 90er.
+Hart.
+Rau.
+Dein OS wird <em>manuell</em> via einzelner Kommandos konfiguriert.</p>
+<pre><code>ssh user<span class="hljs-meta">@server</span>
+vim <span class="hljs-regexp">/etc/</span>postfix/main.cf
+<span class="hljs-regexp">/etc/</span>init.d/postfix restart
+</code></pre><p>Du loggst dich ein, &auml;nderst Config.
+Restartest deinen Dienst.</p>
+<p>*W&uuml;rg*</p>
+<hr>
+<h2 id="the-rise-of-configuration-management">The Rise of Configuration Management</h2>
+<p>2000.</p>
+<p>Der Durchschnittsadmin peitscht immer mehr Server in Clustern vor sich her.
+Repitative Arbeit in einem Team von Admins.</p>
+<ul>
+<li>Login</li>
+<li>Change</li>
+<li>Repeat</li>
+</ul>
+<p>Viele schreiben Shell Skripte in Not und Verzweiflung um nicht der Tippgicht
+zu verfallen.</p>
+<hr>
+<h2 id="the-rise-of-configuration-management">The Rise of Configuration Management</h2>
+<p>Deine Daemons, das Internet (curl |bash), deine Kollegen* werden alles tun um den State deiner Systeme alternieren.
+Ohne das du es mitbekommst oder irgendwann nochmal weisst.</p>
+<p>Die Bash History ist <em>keine</em> Dokumentation!</p>
+<p>*Kollegen: Du selbst mit eingeschlossen!</p>
+<hr>
+<h2 id="the-rise-of-configuration-management">The Rise of Configuration Management</h2>
+<p>Neue Tools! Als weitere Evolutionsstufe nach Shell Scripts haben sich schlaue K&ouml;pfe eigene
+DSLs ausgedacht um Systeme beschreiben zu k&ouml;nnen.</p>
+<ul>
+<li>CFEngine (1993) Oh gott, bitte nicht.</li>
+<li>Puppet (2005)</li>
+<li>Chef (2009)</li>
+<li>Salt (2011)</li>
+<li>Ansible (2012)</li>
+</ul>
+<p>Jedes dieser Tools verfolgt ein anderes Ziel aber im Grunde alles
+Konfigurations Management.</p>
+<hr>
+<h2 id="the-rise-of-configuration-management">The Rise of Configuration Management</h2>
+<p>Sie definieren wie das System
+aussehen soll und &quot;Versprechen&quot; die Umsetzung.</p>
+<p>Use Cases:</p>
+<ul>
+<li>File erstellen</li>
+<li>User anlegen</li>
+<li>Dienst muss gestartet sein</li>
+<li>Exec eines bestimmten Kommands</li>
+</ul>
+<hr>
+<h2 id="cfgmgmt-beispiel-1">CfgMgmt - Beispiel 1</h2>
+<p>Zum Beispiel in Puppet einen neuen User anlegen:</p>
+<pre><code>$ vim /etc/puppet/manifest/site.pp
+
+<span class="hljs-keyword">user</span> { <span class="hljs-string">'bernd'</span>:
+  <span class="hljs-attr">ensure</span>     =&gt; <span class="hljs-literal">present</span>,
+  <span class="hljs-attr">uid</span>        =&gt; <span class="hljs-number">1001</span>,
+  <span class="hljs-attr">home</span>       =&gt; /<span class="hljs-literal">home</span>/bernd,
+}
+</code></pre><hr>
+<h2 id="cfgmgmt-beispiel-2">CfgMgmt - Beispiel 2</h2>
+<p>oder in Ansible ein File erstellen:</p>
+<pre><code>vim ~<span class="hljs-meta-keyword">/ansible/</span>main.yaml
+
+- file:
+<span class="hljs-symbol">    path:</span> <span class="hljs-meta-keyword">/etc/</span>foo.conf
+<span class="hljs-symbol">    owner:</span> foo
+<span class="hljs-symbol">    group:</span> foo
+<span class="hljs-symbol">    mode:</span> <span class="hljs-number">0644</span>
+</code></pre><hr>
+<h2 id="the-rise-of-configuration-management">The Rise of Configuration Management</h2>
+<p>Step 1: Katalog aus Config-File(s) zusammen bauen
+Step 2: Auf Zielhost Katalog (State) aufbauen
+Step 3: Unterschiede identifizieren (Diff beider Kataloge)
+Step 4: Korrekturen durchf&uuml;hren auf Zielhost</p>
+<p>Paper zu <a href="http://markburgess.org/PromiseMethod.pdf">Promise Theory</a></p>
+<hr>
+<h2 id="nixos">NixOS</h2>
+<p>Was NixOS im Kern ausmacht ist, dass es Configmanagement und das OS
+verheiratet.</p>
+<p>Man muss es sich so vorstellen als w&auml;re das Config Management das einzige
+Interface wie man mit dem OS kommuniziert, anstatt ein Tool zu anzuweisen die
+Arbeit f&uuml;r einen zu erledigen.</p>
+<hr>
+<h2 id="nixos">NixOS</h2>
+<p>Warum ist das jetzt geil?</p>
+<ul>
+<li>Verl&auml;ssliche atomare Upgrades</li>
+<li>Rollbacks</li>
+<li>Reproduzierbare System Konfiguration</li>
+</ul>
+<hr>
+<h2 id="nixos-zitat-aus-dem-irc">NixOS Zitat aus dem IRC</h2>
+<blockquote>
+<p>Setting up NixOS to me is like setting up Arch but you&#39;re guaranteed to only need to do it once</p>
+<p>jD91mZM2</p>
+</blockquote>
+<hr>
+<h2 id="nixos-configuration-management-">NixOS: Configuration Management!</h2>
+<p>Gehen wir von einem Plain NixOS (frisch installiert) aus.</p>
+<p>In /etc/nixos/configuration.nix ist der Einstiegspunkt</p>
+<pre><code class="lang-{.numberLines}">{ <span class="hljs-built_in">config</span>, pkgs, ... }:
+
+{
+  services.openssh.enable = true<span class="hljs-comment">;</span>
+  services.openssh.permitRootLogin = <span class="hljs-string">"no"</span><span class="hljs-comment">;</span>
+
+  <span class="hljs-comment"># Use the GRUB 2 boot loader.</span>
+  <span class="hljs-keyword">boot.loader.grub </span>{
+    enable = true<span class="hljs-comment">;</span>
+    version = <span class="hljs-number">2</span><span class="hljs-comment">;</span>
+    device = <span class="hljs-string">"/dev/sda"</span><span class="hljs-comment">;</span>
+  }
+}
+</code></pre>
+<p>Und das w&uuml;rde theoretisch ausreichen um ein NixOS zu betreiben.</p>
+<hr>
+<h2 id="nixos-configuration-management-">NixOS: Configuration Management!</h2>
+<p>Um das System zu ver&auml;ndern</p>
+<pre><code>vim <span class="hljs-regexp">/etc/</span>nixos/configuration.nix
+nixos-rebuild <span class="hljs-keyword">switch</span>
+</code></pre><p>Demo Time!</p>
+<hr>
+<h2 id="nixos-internals-">NixOS: Internals!</h2>
+<p>Was passiert da jetzt unter der Haube</p>
+<pre><code>$ ls /nix/var/nix/profiles/
+.
+..
+system <span class="hljs-selector-id">#system-73-link</span>
+system-<span class="hljs-number">10</span>-link #/nix/store/<span class="hljs-number">2s</span>s198p8l60kxzyh20zm9wg1rh34n6g1-nixos-system-mqtt<span class="hljs-selector-class">.k4cg</span><span class="hljs-selector-class">.org-17</span>.<span class="hljs-number">03.1825</span><span class="hljs-selector-class">.df7e518568</span>
+system-<span class="hljs-number">11</span>-link #/nix/store/<span class="hljs-number">81</span>fm4dxwk6nr46cdl78c24nk603r163m-nixos-system-mqtt<span class="hljs-selector-class">.k4cg</span><span class="hljs-selector-class">.org-17</span>.<span class="hljs-number">03.1825</span><span class="hljs-selector-class">.df7e518568</span>
+system-<span class="hljs-number">12</span>-link #/nix/store/<span class="hljs-number">7</span>h3h5q35mvl4dm38253saz1bf7mg9yi2-nixos-system-mqtt<span class="hljs-selector-class">.k4cg</span><span class="hljs-selector-class">.org-17</span>.<span class="hljs-number">03.1825</span><span class="hljs-selector-class">.df7e518568</span>
+system-<span class="hljs-number">13</span>-link #/nix/store/<span class="hljs-number">81</span>fm4dxwk6nr46cdl78c24nk603r163m-nixos-system-mqtt<span class="hljs-selector-class">.k4cg</span><span class="hljs-selector-class">.org-17</span>.<span class="hljs-number">03.1825</span><span class="hljs-selector-class">.df7e518568</span>
+system-<span class="hljs-number">14</span>-link #/nix/store/<span class="hljs-number">5s</span>s77ahipw995ysrllxq84lsjx8gkzmw-nixos-system-mqtt<span class="hljs-selector-class">.k4cg</span><span class="hljs-selector-class">.org-17</span>.<span class="hljs-number">03.1825</span><span class="hljs-selector-class">.df7e518568</span>
+system-<span class="hljs-number">1</span>-link #/nix/store/jw12px138dybgir3dqik670gfx1xswg0-nixos-system-mqtt<span class="hljs-selector-class">.k4cg</span><span class="hljs-selector-class">.org-17</span>.<span class="hljs-number">03.1825</span>.df7e518568
+</code></pre><hr>
+<h2 id="nixos-rollback-">NixOS: Rollback!</h2>
+<p>Das tolle daran, Angewandte Changes k&ouml;nnen (in bestimmten Ma&szlig;e) zur&uuml;ckgerollt
+werden.</p>
+<pre><code>nixos-rebuild <span class="hljs-keyword">switch</span> <span class="hljs-comment">--rollback</span>
+</code></pre><p>Ohne eben die nat&uuml;rlichen Ausnahmen (DB Version Upgrade mit Schema Changes...
+usw)</p>
+<p>Was passiert da:</p>
+<ul>
+<li>Daemons werden wieder ausgeschaltet</li>
+<li>Alte config Versionen werden wieder verwendet</li>
+<li>usw usw...</li>
+</ul>
+<p>Eben Alles was nixos &auml;ndert wird r&uuml;ckg&auml;ngig gemacht, so ein Rollback der auch
+wirklich funktioniert!</p>
+<hr>
+<h2 id="nixos-wie-funktioniert-das-technisch-alles-">NixOS: Wie funktioniert das technisch alles?!</h2>
+<p><ballmer>Symlinks, Symlinks, Symlinks\</ballmer\></p>
+<pre><code>$ which git
+/<span class="hljs-keyword">run</span><span class="bash">/current-system/sw/bin/git
+</span>$ l /<span class="hljs-keyword">run</span><span class="bash">/current-system/sw/bin/git
+</span>/<span class="hljs-keyword">run</span><span class="bash">/current-system/sw/bin/git <span class="hljs-comment">#/nix/store/gc80crp6ddm11h6zh3vnkzlbacxnswak-git-2.14.1/bin/git</span></span>
+</code></pre><hr>
+<h2 id="nixos-wie-funktioniert-das-technisch-alles-">NixOS: Wie funktioniert das technisch alles?!</h2>
+<p>Ein <code>ps</code> kann unter Umst&auml;nden anfangs etwas verwirrend aussehen.</p>
+<pre><code>httpd -f <span class="hljs-regexp">/nix/</span>store/yhdz9vwkm35r9f3fqj5dp9dzyg0154br-httpd.conf
+ \_ httpd -f <span class="hljs-regexp">/nix/</span>store/yhdz9vwkm35r9f3fqj5dp9dzyg0154br-httpd.conf
+ \_ httpd -f <span class="hljs-regexp">/nix/</span>store/yhdz9vwkm35r9f3fqj5dp9dzyg0154br-httpd.conf
+ \_ httpd -f <span class="hljs-regexp">/nix/</span>store/yhdz9vwkm35r9f3fqj5dp9dzyg0154br-httpd.conf
+ \_ httpd -f <span class="hljs-regexp">/nix/</span>store/yhdz9vwkm35r9f3fqj5dp9dzyg0154br-httpd.conf
+dhcpcd -w --quiet --config <span class="hljs-regexp">/nix/</span>store/<span class="hljs-number">65</span>faqsgxbxgdpb9xj5q9r780lj0jcdwj-dhcpcd.conf
+nix-daemon --daemon
+<span class="hljs-regexp">/nix/</span>store<span class="hljs-regexp">/ick7hkazslqz2b75nfgfr0fz5cgal3c8-cron-4.1/</span>bin/cron -n
+<span class="hljs-regexp">/nix/</span>store<span class="hljs-regexp">/8dshy3jqzkw2c73czw6kbw0msx9ivfi6-systemd-232/</span>lib<span class="hljs-regexp">/systemd/</span>systemd --user
+ \_ (sd-pam
+ \_ <span class="hljs-regexp">/nix/</span>store<span class="hljs-regexp">/sshcjcvscx2kxy3x11rbqsxd4g780ln4-openssh-7.4p1/</span>bin<span class="hljs-regexp">/ssh-agent -a /</span>run<span class="hljs-regexp">/user/</span><span class="hljs-number">1000</span>/ssh-agent
+<span class="hljs-regexp">/nix/</span>store<span class="hljs-regexp">/pcl82rq2aw28015pqi27hwgrp5znrfq3-mosquitto-1.4.14/</span>bin<span class="hljs-regexp">/mosquitto -c /</span>nix<span class="hljs-regexp">/store/</span>m699paqbxybhfdmlnkn53q2sc6r69ni5-mosquitto.conf -d
+</code></pre><hr>
+<h2 id="nix-der-paket-manager">Nix: Der Paket Manager</h2>
+<p>NixOS basiert auf Nix, dem Paket Manager.</p>
+<hr>
+<h2 id="nix-user-local-installs-">Nix: User-local Installs!</h2>
+<p>Ich muss unter NixOS allerdings kein <code>root</code> sein um neue Pakete zu
+installieren.</p>
+<pre><code><span class="hljs-symbol">$</span> su bernd
+<span class="hljs-symbol">$</span> nixenv -iA nixos.curl
+<span class="hljs-symbol">$</span> curl http:<span class="hljs-comment">//russenschlampen.de</span>
+</code></pre><hr>
+<h2 id="nix-user-local-installs-">Nix: User-local Installs!</h2>
+<p>Was passiert ist, dass unter <code>/nix/store</code> die Binaries abgelegt werden.</p>
+<pre><code>$ ls /nix/store/ | grep curl | grep bin
+dk2668744spfp0vy14c39nhnbmmc85ws-curl<span class="hljs-number">-7.56</span><span class="hljs-number">.0</span>-bin
+qs3lyiysdpbbknxy3q9vc585adkvam74-curl<span class="hljs-number">-7.56</span><span class="hljs-number">.1</span>-bin
+r8inh6r6a5nz3paskiz9j9pnn7dyx30j-curl<span class="hljs-number">-7.55</span><span class="hljs-number">.0</span>-bin
+</code></pre><p>Jeder User hat einen eigenen PATH mit Binard</p>
+<pre><code><span class="hljs-regexp">/run/</span>current-system<span class="hljs-regexp">/sw/</span>bin
+<span class="hljs-regexp">/home/</span>bernd<span class="hljs-regexp">/.nix-profile/</span>bin
+</code></pre><hr>
+<h2 id="nix-user-local-installs-">Nix: User-local Installs!</h2>
+<p>In diesem Folder ist dann, vereinfacht gesagt nichts anderes als Symlink</p>
+<pre><code>$ ls /home/bernd/.nix-profile/bin
+curl #/nix/store/qs3lyiysdpbbknxy3q9vc585adkvam74-curl<span class="hljs-number">-7.56</span><span class="hljs-number">.1</span>-bin/bin/curl
+git #/nix/store/<span class="hljs-number">9</span>iyw9xxh6bpvp0g8zamsc5264mykfbps-git<span class="hljs-number">-2.14</span><span class="hljs-number">.1</span>/bin/git
+influx #/nix/store/ny1gm0r14z1am0vfi8rn9z7l1xpyi555-influxdb<span class="hljs-number">-1.0</span><span class="hljs-number">.2</span>-bin/bin/influx
+influxd #/nix/store/ny1gm0r14z1am0vfi8rn9z7l1xpyi555-influxdb<span class="hljs-number">-1.0</span><span class="hljs-number">.2</span>-bin/bin/influxd
+iotop #/nix/store/d4qqyhigib69s5fni6srq0bf9higb608-iotop<span class="hljs-number">-0.6</span>/bin/iotop
+lynx #/nix/store/anz7v2ijmfi4mb82jilb17kjr22jggps-lynx<span class="hljs-number">-2.8</span><span class="hljs-number">.9</span>dev<span class="hljs-number">.11</span>/bin/lynx
+swaks #/nix/store/hczryibja30py3s07073d2jwm8vrlh7k-swaks<span class="hljs-number">-20170101.0</span>/bin/swaks
+telnet #/nix/store/sh7lppfxk3w1pigrclsqw3dq9g81bavh-telnet<span class="hljs-number">-1.2</span>/bin/telnet
+</code></pre><hr>
+<h2 id="nix-user-local-rollbacks-">Nix: User local Rollbacks!</h2>
+<p>Diese ganze Rollback Geschichte funktioniert nat&uuml;rlich auch bei User Paketen.</p>
+<pre><code>$ <span class="hljs-keyword">which</span> telnet
+<span class="hljs-keyword">which</span>: <span class="hljs-keyword">no</span> telnet <span class="hljs-keyword">in</span> PATH
+
+$ nix-env -iA nixos.telnet
+installing ‘telnet-1.2’
+building path(s) ‘/nix/store/pkl7rpx907dxlv28byblb9lrj6khymgp-user-environment’
+created 268 symlinks <span class="hljs-keyword">in</span> user environment
+
+$ <span class="hljs-keyword">which</span> telnet
+/home/noqqe/.nix-profile/bin/telnet
+
+$ nix-env --rollback
+switching from generation 11 to 10
+
+$ <span class="hljs-keyword">which</span> telnet
+<span class="hljs-keyword">which</span>: <span class="hljs-keyword">no</span> telnet <span class="hljs-keyword">in</span> PATH
+</code></pre><hr>
+<h2 id="nix-user-local-rollbacks-">Nix: User local Rollbacks!</h2>
+<pre><code>$ nix-env --list-generations
+  1   2018<span class="hljs-string">-02</span><span class="hljs-string">-22</span> 10:03:38
+  2   2018<span class="hljs-string">-02</span><span class="hljs-string">-22</span> 10:04:04
+  3   2018<span class="hljs-string">-03</span><span class="hljs-string">-19</span> 21:00:20
+  4   2018<span class="hljs-string">-03</span><span class="hljs-string">-19</span> 21:04:03
+  5   2018<span class="hljs-string">-04</span><span class="hljs-string">-02</span> 22:19:55
+  6   2018<span class="hljs-string">-04</span><span class="hljs-string">-12</span> 21:04:17
+  7   2018<span class="hljs-string">-04</span><span class="hljs-string">-12</span> 21:04:37
+  8   2018<span class="hljs-string">-04</span><span class="hljs-string">-12</span> 21:05:38
+  9   2018<span class="hljs-string">-11</span><span class="hljs-string">-12</span> 20:48:22
+ 10   2018<span class="hljs-string">-11</span><span class="hljs-string">-12</span> 20:50:24   (current)
+ 11   2018<span class="hljs-string">-11</span><span class="hljs-string">-12</span> 20:52:00
+</code></pre><hr>
+<h2 id="nix-package-manager">Nix: Package Manager</h2>
+<p>L&auml;sst sich auch auf Linux/macOS installieren.</p>
+<p>Obacht, <code>curl | bash</code> ahead!</p>
+<p>Das heisst man hat dann all diese Vorteile von local Install und Versionen.</p>
+<hr>
+<h2 id="nix-eco-system-berblick">Nix Eco System: &Uuml;berblick</h2>
+<p>nix - Package Manager
+nixos - Operating System
+nixops - Service Orchestration Tool</p>
+<hr>
+<h2 id="nixops-abstraktion-ist-die-l-sung-aller-probleme">NixOps: Abstraktion ist die L&ouml;sung aller Probleme</h2>
+<p><a href="https://nixos.org/nixops/">NixOps</a> ist sozusagen noch ein Layer mehr. Also mehrere Maschinen maintainen.
+Sozusagen eine Mischung aus Ansible und Terraform.</p>
+<pre><code>{
+  <span class="hljs-attr">webserver</span> =
+    { deployment.<span class="hljs-attr">targetEnv</span> = <span class="hljs-string">"virtualbox"</span>;
+      services.httpd.<span class="hljs-attr">enable</span> = <span class="hljs-literal">true</span>;
+    };
+
+  <span class="hljs-attr">fileserver</span> =
+    { deployment.<span class="hljs-attr">targetEnv</span> = <span class="hljs-string">"virtualbox"</span>;
+      services.nfs.server.<span class="hljs-attr">enable</span> = <span class="hljs-literal">true</span>;
+    };
+}
+</code></pre><p>Generell habe ich damit aber keine Erfahrung.</p>
+<hr>
+<h2 id="was-machen-wir-in-der-k4cg-mit-nixos-">Was machen wir in der K4CG mit NixOS?</h2>
+<p>Demo Time!</p>
+<hr>
+<h2 id="meta-slide">Meta Slide</h2>
+<p>Danke!</p>
+<p>F&uuml;r diesen Talk habe ich <a href="https://github.com/visit1985/mdp">mpd</a> benutzt und w&uuml;rde gerne erfahren wie ihr
+diese Art der Darstellung fandet.</p>
+<p>Au&szlig;erdem lenkt das wunderbar von inhaltlichen Fragen zum Vortrag ab.
+noqqe@nuel-102806 ~/C/nixos-talk (master %)&gt;</p>
+
